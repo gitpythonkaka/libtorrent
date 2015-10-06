@@ -1302,7 +1302,7 @@ namespace libtorrent
 
 		enum op_t
 		{
-			parse_addr, open, bind, listen, get_peer_name, accept
+			parse_addr, open, bind, listen, get_socket_name, accept
 		};
 
 		// the specific low level operation that failed. See op_t.

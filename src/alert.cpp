@@ -817,7 +817,7 @@ namespace libtorrent {
 			"open",
 			"bind",
 			"listen",
-			"get_peer_name",
+			"get_socket_name",
 			"accept"
 		};
 		char ret[300];

@@ -3052,8 +3052,7 @@ namespace libtorrent
 
 #endif
 
-	void torrent::announce_with_tracker(boost::uint8_t e
-		, address const& bind_interface)
+	void torrent::announce_with_tracker(boost::uint8_t e)
 	{
 		TORRENT_ASSERT(is_single_thread());
 		INVARIANT_CHECK;
@@ -3172,8 +3171,6 @@ namespace libtorrent
 				if (!ae.start_sent) req.event = tracker_request::started;
 				else if (!ae.complete_sent && is_seed()) req.event = tracker_request::completed;
 			}
-
-			req.bind_ip = bind_interface;
 
 			if (settings().get_bool(settings_pack::force_proxy))
 			{
@@ -3522,41 +3519,6 @@ namespace libtorrent
 				, r.url);
 		}
 		m_got_tracker_response = true;
-
-		// we're listening on an interface type that was not used
-		// when talking to the tracker. If there is a matching interface
-		// type in the tracker IP list, make another tracker request
-		// using that interface
-		// in order to avoid triggering this case over and over, don't
-		// do it if the bind IP for the tracker request that just completed
-		// matches one of the listen interfaces, since that means this
-		// announce was the second one
-		// don't connect twice just to tell it we're stopping
-
-		if (((!is_any(m_ses.get_ipv6_interface().address()) && tracker_ip.is_v4())
-			|| (!is_any(m_ses.get_ipv4_interface().address()) && tracker_ip.is_v6()))
-			&& r.bind_ip != m_ses.get_ipv4_interface().address()
-			&& r.bind_ip != m_ses.get_ipv6_interface().address()
-			&& r.event != tracker_request::stopped)
-		{
-			std::list<address>::const_iterator i = std::find_if(tracker_ips.begin()
-				, tracker_ips.end(), boost::bind(&address::is_v4, _1) != tracker_ip.is_v4());
-			if (i != tracker_ips.end())
-			{
-				// the tracker did resolve to a different type of address, so announce
-				// to that as well
-
-				// tell the tracker to bind to the opposite protocol type
-				address bind_interface = tracker_ip.is_v4()
-					?m_ses.get_ipv6_interface().address()
-					:m_ses.get_ipv4_interface().address();
-				announce_with_tracker(r.event, bind_interface);
-#ifndef TORRENT_DISABLE_LOGGING
-				debug_log("announce again using %s as the bind interface"
-					, print_address(bind_interface).c_str());
-#endif
-			}
-		}
 
 		do_connect_boost();
 
